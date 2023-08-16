@@ -1,5 +1,3 @@
-use load::init_game;
-
 use std::io::{stdout, stdin, Write, Read};
 
 
@@ -23,6 +21,85 @@ pub(crate) struct Game {
 	pub(crate) wordlist:Vec<Word>,
 	pub(crate) active:bool,
 	pub(crate) state:Option<State>
+}
+
+impl Game {
+	fn start(&mut self) {
+		let Some(state) = &mut self.state else {
+			println!("The game failed to initialize properly. :(");
+			self.active = false;
+			return;
+		};
+		
+		compute_new_reveal_string(state);
+		while state.chances > 0 && self.active {
+			println!("\n{}", state.revealed_string);
+			println!("{:?}", state.word.categories);
+			if self.hints_enabled { println!("Hint: {}", state.word.hint); }
+			println!("Guessed characters: {:?}; wrong-guesses left: {}", state.guessed, state.chances);
+			print!("\nGuess a character: ");
+			let _ = stdout().flush();
+			
+			let Some(Ok(char)) = stdin().bytes().next() else {
+				println!("Could not read input! :(");
+				self.active = false;
+				return;
+			};
+			let char = char::from(char).to_ascii_lowercase();
+			if char.is_whitespace() { continue; }
+			
+			if state.guessed.contains(&char) {
+				println!("\nYou already guessed '{char}'!");
+				continue;
+			}
+			state.guessed.push(char);
+			
+			if !state.word.name.contains(char) {
+				println!("There is no '{char}' in this word!");
+				state.chances -= 1;
+				continue;
+			}
+			if compute_new_reveal_string(state) == 0 {
+				println!("You guessed the word correctly! :D");
+				break;
+			}
+		}
+	}
+	
+	
+	
+	/// Handles the entry menu for the game.
+	pub(crate) fn enter(&mut self) {
+		let mut input = String::new();
+		
+		println!("Welcome to hangman- made in Rust.");
+		while self.active {
+			input.clear();
+			
+			print!(
+				"What would you like To do? [P]lay  Toggle [H]ints ({})  [E]xit : ",
+				if self.hints_enabled { "On" } else { "Off" }
+			);
+			let _ = stdout().flush();
+			
+			if let Ok(_) = stdin().read_line(&mut input) {
+				input = input.to_ascii_lowercase().trim().to_string();
+				if input.is_empty() { continue; }
+				match input.as_str() {
+					"play" | "p" => {
+						self.initialize();
+						self.start();
+					}
+					"toggle hints" | "hints" | "h" => self.hints_enabled = !self.hints_enabled,
+					"exit" | "e" => self.active = false,
+					_ => {}
+				}
+			} else {
+				println!("\nCould not read input! :(");
+				self.active = false;
+			}
+		}
+	}
 }
 
 impl Default for Game {
@@ -61,88 +138,4 @@ pub(crate) fn compute_new_reveal_string(state:&mut State) -> usize {
 		else { state.revealed_string.push(' '); }
 	}
 	hidden_chars
-}
-
-
-
-/// Enters the game.
-pub(crate) fn enter_game(game:&mut Game) {
-	let Some(state) = &mut game.state else {
-		println!("The game failed to initialize properly. :(");
-		game.active = false;
-		return;
-	};
-	
-	while state.chances > 0 && game.active {
-		
-		println!("\n{}", state.revealed_string);
-		println!("{:?}", state.word.categories);
-		if game.hints_enabled { println!("Hint: {}", state.word.hint); }
-		println!("Guessed characters: {:?}; wrong-guesses left: {}", state.guessed, state.chances);
-		print!("\nGuess a character: ");
-		let _ = stdout().flush();
-		
-		if let Some(char) = stdin().bytes().next().and_then( |b| if let Ok(b) = b { Some(char::from(b)) } else { None } ) {
-			let char = char.to_ascii_lowercase();
-			
-			if char.is_whitespace() { continue; }
-			
-			if state.guessed.contains(&char) {
-				println!("\nYou already guessed '{char}'!");
-				continue;
-			}
-			state.guessed.push(char);
-			
-			if state.word.name.contains(char) {
-				if compute_new_reveal_string(state) == 0 {
-					game.active = false;
-					println!("You guessed the word correctly! :D");
-				}
-			} else {
-				state.chances -= 1;
-				println!("There is no '{char}' in this word!");
-			}
-		} else {
-			println!("Could not read input! :(");
-			game.active = false;
-		}
-		
-	}
-	if state.chances == 0 { println!("You guess incorrectly too many times! D:"); }
-	
-}
-
-
-
-/// Prings the menu for the game.
-pub(crate) fn menu(game:&mut Game) {
-	let mut input = String::new();
-	
-	println!("Welcome to hangman- made in Rust.");
-	while game.active {
-		input.clear();
-		
-		print!(
-			"What would you like To do? [P]lay  Toggle [H]ints ({})  [E]xit : ",
-			if game.hints_enabled { "On" } else { "Off" }
-		);
-		let _ = stdout().flush();
-		
-		if let Ok(_) = stdin().read_line(&mut input) {
-			input = input.to_ascii_lowercase().trim().to_string();
-			if input.is_empty() { continue; }
-			match input.as_str() {
-				"play" | "p" => {
-					init_game(game);
-					enter_game(game);
-				}
-				"toggle hints" | "hints" | "h" => game.hints_enabled = !game.hints_enabled,
-				"exit" | "e" => game.active = false,
-				_ => {}
-			}
-		} else {
-			println!("\nCould not read input! :(");
-			panic!();
-		}
-	}
 }

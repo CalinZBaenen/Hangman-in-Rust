@@ -89,22 +89,23 @@ pub(crate) fn load_wordlist() -> Result<Vec<Word>, ()> {
 
 
 
-/// Loads the word-list and prepares the game-state.
-pub(crate) fn init_game(game:&mut Game) {
-	if let Ok(wordlist) = load_wordlist() {
-		
-		if wordlist.len() > 1 {
-			let mut state = State::default();
-			state.chances = 5;
-			state.word = wordlist[ thread_rng().gen_range(0..wordlist.len()) ].clone();
+impl Game {
+	/// Loads the word-list and prepares the game-state.
+	pub(crate) fn initialize(&mut self) {
+		if let Ok(wordlist) = load_wordlist() {
 			
-			game.wordlist = wordlist;
-			game.state = Some(state);
+			if wordlist.len() > 1 {
+				let mut state = State::default();
+				state.chances = 5;
+				state.word = wordlist[ thread_rng().gen_range(0..wordlist.len()) ].clone();
+				
+				self.wordlist = wordlist;
+				self.state = Some(state);
+				
+				return;
+			} else { println!("(Can not play hangman without any words!)"); }
 			
-			return;
-		} else { println!("(Can not play hangman without any words!)"); }
-		
+		}
+		println!("Could not initialize word-list1! :(");
 	}
-	println!("Could not initialize word-list1! :(");
-	game.active = false;
 }
