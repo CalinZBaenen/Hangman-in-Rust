@@ -1,4 +1,4 @@
-use std::io::{stdout, stdin, Write, Read};
+use std::io::{stdout, stdin, Write};
 
 
 
@@ -30,9 +30,12 @@ impl Game {
 			self.active = false;
 			return;
 		};
-		
 		compute_new_reveal_string(state);
+		
+		let mut input = String::new();
 		while state.chances > 0 && self.active {
+			input.clear();
+			
 			println!("\n{}", state.revealed_string);
 			println!("{:?}", state.word.categories);
 			if self.hints_enabled { println!("Hint: {}", state.word.hint); }
@@ -40,13 +43,17 @@ impl Game {
 			print!("\nGuess a character: ");
 			let _ = stdout().flush();
 			
-			let Some(Ok(char)) = stdin().bytes().next() else {
+			if stdin().read_line(&mut input).is_err() {
 				println!("Could not read input! :(");
 				self.active = false;
 				return;
-			};
-			let char = char::from(char).to_ascii_lowercase();
-			if char.is_whitespace() { continue; }
+			}
+			input = input.trim().to_ascii_lowercase();
+			if input.len() > 1 {
+				println!("You can not guess more than one character at a time!");
+				continue;
+			}
+			let Some(char) = input.chars().nth(0) else { continue; };
 			
 			if state.guessed.contains(&char) {
 				println!("\nYou already guessed '{char}'!");
