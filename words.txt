@@ -1,0 +1,19 @@
+frying pan
+	household object, kitchenware, tool;
+	This is a common object used in food preparation.
+
+television
+	household object, entertainment;
+	This object is used for entertaining people and it is found commonly in many homes.
+
+jigsaw puzzle
+	entertainment, game;
+	A game involving fitting interlocking pieces together.
+
+scissors
+	tool;
+	A hand-operated tool used to cut various (thin) materials.
+
+flower
+	plant, decor;
+	A small plant with leaves and pedals.

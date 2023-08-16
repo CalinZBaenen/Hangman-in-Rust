@@ -1,0 +1,9 @@
+[package]
+authors = ["Calin Z. Baenen <calinbaenen@gmail.com>"]
+version = "1.0.0"
+name = "hangman-rust"
+
+
+
+[dependencies]
+rand = "0.8.5"
